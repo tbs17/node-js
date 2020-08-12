@@ -11,7 +11,7 @@ const dishSchema= new Schema({
         type:String,
         required:true
     }
-},{ timestamps:true //this can set the time stamp
+},{ timestamps:true //this can set the time
 });
 
 var Dishes=mongoose.model('Dish',dishSchema);
