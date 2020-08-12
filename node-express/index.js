@@ -5,7 +5,9 @@ const morgan=require('morgan');//use morgan to log debugging messages
 const bodyParser=require('body-parser');
 const dishRouter=require('./routes/dishRouter');
 
-const hostname='localhost';
+// host name don't name as localhost as it won't work in docker container
+// the '0.0.0.0' is a special address which means it can be connected from any address
+const hostname='0.0.0.0';
 const port=3000;
 // create the app using express framework by using express()
 const app=express();
@@ -13,36 +15,6 @@ app.use(morgan('dev'));//make it a dev version so we can see print outs
 // below is to serve the app using the files under public folder
 app.use(bodyParser.json());//this will parse the body in json format
 app.use('/dishes',dishRouter); //this is to specify anything related to endpoint /dishes to dishRouter
-
-// app.all('/dishes',(req,res,next)=>{
-//     res.statusCode=200;
-//     res.setHeader('Content-Type','text/plain');
-//     next();//next function tells it to continue on to the below code and pass on the modified parameters to the below functions
-
-// });
-
-// app.get('/dishes',(req,res,next)=>{
-//     res.end('Will send all the dishes to you!');
-
-// });
-
-// app.post('/dishes',(req,res,next)=>{
-//     res.end('Will add the dish: '+req.body.name+ ' with details: '+req.body.description);
-//     //since we parse the body of the incoming request, so we can access them via req.body.name/description
-// });
-
-// app.put('/dishes',(req,res,next)=>{
-//     res.statusCode=403;//as it doesn't make sense to put on the /dishes, it's supposed to update on the server
-//     res.end('PUT operation not supported on /dishes');
-    
-//     //since we parse the body of the incoming request, so we can access them via req.body.name/description
-// });
-
-// app.delete('/dishes',(req,res,next)=>{
-//     res.end('Deleting all the dishes!');
-//     //since we parse the body of the incoming request, so we can access them via req.body.name/description
-// });
-
 
 // ========specify dishid methods=====
 

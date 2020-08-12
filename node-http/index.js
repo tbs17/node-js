@@ -4,7 +4,7 @@ const path=require('path');
 const fs=require('fs');
 
 // you will create a local server
-const hostname='localhost';
+const hostname='0.0.0.0';
 const port=3000;//3000 is default
 const server=http.createServer((req,res)=>{
     // console.log(req.headers);//req is request, res is the response
@@ -57,5 +57,6 @@ const server=http.createServer((req,res)=>{
 
 server.listen(port,hostname,()=>{
     // using back quotes to include the hostname and port variable
+    // this console is present in terminal as it's server side. won't be necessarily on browser
     console.log(`Server running at http://${hostname}:${port}`)
 });

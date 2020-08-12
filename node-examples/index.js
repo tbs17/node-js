@@ -10,7 +10,7 @@ const rectangle = require('./rectangle');
 
 function solveRect(l,b){
     console.log("Solving for rectangle with l=" + l+" and b="+b);
-    // (err,rectangle) is the callback function and you can specify what happens if err and what happens if retangle
+    // (err,rectangle) is the callback function and you can specify what hens if err and what hens if retangle
     rect(l,b,(err,rectangle)=>{
         if (err){
             console.log('ERROR:',err.message);
