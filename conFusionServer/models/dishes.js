@@ -35,25 +35,25 @@ const dishSchema= new Schema({
     },
     image:{
         type:String,
-        required: true,
+        required: true
       
     },
     category:{
         type:String,
-        required: true,
+        required: true
       
     },
     label:{
         type:String,
         // you can specify default value
-        default: '',
+        default: ''
       
     },
     price:{
         // use the currency constant created above 
         type: Currency,
         required: true,
-        min:0,
+        min:0
       
     },
     featured:{

@@ -10,6 +10,7 @@ var dishRouter = require('./routes/dishRouter');
 
 const mongoose=require('mongoose');
 const Dishes=require('./models/dishes');
+const { countDocuments } = require('./models/dishes');
 
 // set up the server
 const url='mongodb://0.0.0.0:27017/conFusion';
@@ -26,10 +27,48 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
-app.use(logger('dev'));
+app.use(logger('dev'));//middleware 1
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser());//middleware 2 parsing the cookie and other things
+
+// =======BASIC AUTHORIZATION=======
+// write a function auth
+
+function auth(req,res,next) {
+  console.log(req.headers);
+// create a variable called authHeader that's from the authorization header which can be included in the request
+  var authHeader=req.headers.authorization;
+
+  if (!authHeader){ //if user didn't provide authorization header
+    var err=new Error('You are not authenticated!'); //then create an error message telling the client that he's not authorized
+// responde with a header information of WWW-Authenticate and ask the client to provide basic authentication
+    res.setHeader('WWW-Authenticate','Basic');
+    err.status=401; //the err status will be 401(unautherized), if it's a response status, we will statusCode
+    return next(err); //redirect the user to the error handling mechanism
+  }
+  var auth=new Buffer(authHeader.split(' ')[1],'base64').toString().split(':');
+  //the authHeader will contain 'Basic' and the encrypted string'QWSH...', that's why [1]
+  // we will use base64 protocol to descrpt it
+
+  // extract the username and password
+  var username=auth[0];
+  var password=auth[1];
+
+  if(username==='admin' && password==='password'){ //here is the username is 'admin' and the password is 'password', note '==='
+    next();//next means the authentication part is done and the user can move on to the next stage
+
+  } else {
+    var err=new Error('You are not authenticated!'); 
+    res.setHeader('WWW-Authenticate','Basic');
+    err.status=401; 
+    return next(err); 
+  }
+}
+// ====Authorization middelware is done===
+
+
+app.use(auth); 
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
