@@ -1,13 +1,18 @@
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
+// the cookie-parser is already included in the express module
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var session=require('express-session');
+var FileStore=require('session-file-store')(session);
 
+
+// below is to define the router using router files
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var dishRouter = require('./routes/dishRouter');
-
+// below is to use mongoose schema ile
 const mongoose=require('mongoose');
 const Dishes=require('./models/dishes');
 const { countDocuments } = require('./models/dishes');
@@ -30,45 +35,70 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));//middleware 1
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());//middleware 2 parsing the cookie and other things
-
-// =======BASIC AUTHORIZATION=======
-// write a function auth
-
+// '12345-67890-09876-54321' secret key, is random here
+// comment out if using express-session
+// app.use(cookieParser('12345-67890-09876-54321'));//middleware 2 parsing the cookie and other things
+app.use(session({
+  name:'session-id',
+  secret:'12345-67890-09876-54321',
+  'saveUninitialized':false,
+  resave:false,
+  store:new FileStore()
+}));
+// =======BASIC AUTHORIZATION with cookie=======
 function auth(req,res,next) {
-  console.log(req.headers);
-// create a variable called authHeader that's from the authorization header which can be included in the request
-  var authHeader=req.headers.authorization;
+  // console.log(req.signedCookies);
+  console.log(req.session);
 
-  if (!authHeader){ //if user didn't provide authorization header
-    var err=new Error('You are not authenticated!'); //then create an error message telling the client that he's not authorized
-// responde with a header information of WWW-Authenticate and ask the client to provide basic authentication
-    res.setHeader('WWW-Authenticate','Basic');
-    err.status=401; //the err status will be 401(unautherized), if it's a response status, we will statusCode
-    return next(err); //redirect the user to the error handling mechanism
-  }
-  var auth=new Buffer(authHeader.split(' ')[1],'base64').toString().split(':');
-  //the authHeader will contain 'Basic' and the encrypted string'QWSH...', that's why [1]
-  // we will use base64 protocol to descrpt it
+  if(!req.session.user){
+    // if(!req.signedCookies.user){
+// if the signedCookies named as 'user' is not done, then we will go through the basic authentication process
 
-  // extract the username and password
-  var username=auth[0];
-  var password=auth[1];
+  // create a variable called authHeader that's from the authorization header which can be included in the request
+    var authHeader=req.headers.authorization;
+    if (!authHeader){ //if user didn't provide authorization header
+      var err=new Error('You are not authenticated!'); //then create an error message telling the client that he's not authorized
+  // responde with a header information of WWW-Authenticate and ask the client to provide basic authentication
+      res.setHeader('WWW-Authenticate','Basic');//prompt user to do basic authentication
+      err.status=401; //the err status will be 401(unautherized), if it's a response status, we will statusCode
+      return next(err); //redirect the user to the error handling mechanism
+    }
+    // new buffer.from() is more secure than new buffer()
+    var auth=new Buffer.from(authHeader.split(' ')[1],'base64').toString().split(':');
+    //the authHeader will contain 'Basic' and the encrypted string'QWSH...', that's why [1]
+    // we will use base64 protocol to descrpt it, extract the username and password
+    var username=auth[0];
+    var password=auth[1];
 
-  if(username==='admin' && password==='password'){ //here is the username is 'admin' and the password is 'password', note '==='
-    next();//next means the authentication part is done and the user can move on to the next stage
+    if(username==='admin' && password==='password'){ //here is the username is 'admin' and the password is 'password', note '==='
+      // res.cookie('user','admin',{signed:true}); //if basic authentication is successful, then server will set up a cookie 
+      req.session.user='admin';
+      next();//next means the authentication part is done and the user can move on to the next stage
 
+    } else {
+      var err=new Error('You are not authenticated!'); 
+      res.setHeader('WWW-Authenticate','Basic');
+      err.status=401; 
+      return next(err); 
+    }
   } else {
-    var err=new Error('You are not authenticated!'); 
-    res.setHeader('WWW-Authenticate','Basic');
-    err.status=401; 
-    return next(err); 
+    if(req.session.user=='admin'){
+      // if(req.signedCookies.user=='admin'){
+      // if the signedCookies named as user with the username as 'admin' exist, then bypass the basic authentication
+      next();
+    }else{
+      // if the cookie doesn't exist nor finish the basic authenticaiton, then pass it to the error handling
+      var err=new Error('You are not authenticated!'); 
+      err.status=401; 
+      return next(err); 
+    }
   }
 }
-// ====Authorization middelware is done===
-
-
 app.use(auth); 
+// ====Authorization and cookie Parsing middelware is done===
+
+
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
