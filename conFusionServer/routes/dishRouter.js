@@ -1,9 +1,7 @@
 const express=require('express')
 const bodyParser=require('body-parser')
-
-
-// use the disehs schema via mongoose
 const mongoose=require('mongoose');
+const authenticate=require('../authenticate');
 const Dishes=require('../models/dishes');
 
 const dishRouter=express.Router() //use the Router method of express to create a Router
@@ -11,7 +9,6 @@ dishRouter.use(bodyParser.json())//convert all the parsed info to json format fo
 //use the route attribute of the created router and you can chain all the method upon it
 
 dishRouter.route('/')
-// as long as there's no semi-colon in between, it's chaining, you don't need the /dishes any more
 .get((req,res,next)=>{
     // res.end('Will send all the dishes to you!')
     // .find/create/findByID/findByIDAndUpdate/findByIDAndRemove are all methods from mongoose
@@ -27,10 +24,8 @@ dishRouter.route('/')
     .catch((err)=>next(err));
 
 })
-
-.post((req,res,next)=>{
-    // res.end('Will add the dish: '+req.body.name+ ' with details: '+req.body.description)
-    //since we parse the body of the incoming request, so we can access them via req.body.name/description
+// first verify the user via authenticate.verifyUser  and then do the call-back function
+.post(authenticate.verifyUser,(req,res,next)=>{
     Dishes.create(req.body)
     .then((dish)=>{
         // console log is like alert in javascript
@@ -44,15 +39,15 @@ dishRouter.route('/')
 
 })
 
-.put((req,res,next)=>{
+.put(authenticate.verifyUser,(req,res,next)=>{
     res.statusCode=403//as it doesn't make sense to put on the /dishes, it's supposed to update on the server
     res.end('PUT operation not supported on /dishes')
     
     //since we parse the body of the incoming request, so we can access them via req.body.name/description
 })
 
-.delete((req,res,next)=>{
-    // res.end('Deleting all the dishes!')
+.delete(authenticate.verifyUser,(req,res,next)=>{
+
     Dishes.remove({}) //using promise chaining
     .then((resp)=>{
         res.statusCode=200;
@@ -81,14 +76,14 @@ dishRouter.route('/:dishId')
     .catch((err)=>next(err));
 })
 
-.post((req,res,next)=>{
+.post(authenticate.verifyUser,(req,res,next)=>{
     res.statusCode = 403;
     // res.end('Will add the dish:'+req.body.name+ 'with details'+req.body.description)
     //since we parse the body of the incoming request, so we can access them via req.body.name/description
     res.end('POST operation not supported on /dishes/'+req.params.dishId);
 })
 
-.put((req,res,next)=>{
+.put(authenticate.verifyUser,(req,res,next)=>{
     // res.statusCode=403//as it doesn't make sense to put on the /dishes, it's supposed to update on the server
     // res.end('PUT operation not supported on /dishes')
     // res.write('Updating the dish: '+req.params.dishId)
@@ -108,7 +103,7 @@ dishRouter.route('/:dishId')
     //since we parse the body of the incoming request, so we can access them via req.body.name/description
 })
 
-.delete((req,res,next)=>{
+.delete(authenticate.verifyUser,(req,res,next)=>{
     // res.end('Deleting all the dishes!')
     // res.end('Deleting dish id'+req.params.dishId)
     
@@ -147,7 +142,7 @@ dishRouter.route('/:dishId/comments')
 
 })
 
-.post((req,res,next)=>{
+.post(authenticate.verifyUser,(req,res,next)=>{
     // res.end('Will add the dish: '+req.body.name+ ' with details: '+req.body.description)
     //since we parse the body of the incoming request, so we can access them via req.body.name/description
     Dishes.findById(req.params.dishId)
@@ -174,14 +169,14 @@ dishRouter.route('/:dishId/comments')
 
 })
 
-.put((req,res,next)=>{
+.put(authenticate.verifyUser,(req,res,next)=>{
     res.statusCode=403//as it doesn't make sense to put on the /dishes, it's supposed to update on the server
     res.end('PUT operation not supported on /dishes/'+req.params.dishId+'/comments!')
     
     //since we parse the body of the incoming request, so we can access them via req.body.name/description
 })
 
-.delete((req,res,next)=>{
+.delete(authenticate.verifyUser,(req,res,next)=>{
     // res.end('Deleting all the dishes!')
 
     Dishes.findById(req.params.dishId) //using promise chaining
@@ -242,14 +237,14 @@ dishRouter.route('/:dishId/comments/:commentId')
     .catch((err)=>next(err));
 })
 
-.post((req,res,next)=>{
+.post(authenticate.verifyUser,(req,res,next)=>{
     res.statusCode = 403;
     // res.end('Will add the dish:'+req.body.name+ 'with details'+req.body.description)
     //since we parse the body of the incoming request, so we can access them via req.body.name/description
     res.end('POST operation not supported on /dishes/'+req.params.dishId+'/comments/'+req.params.commentId);
 })
 
-.put((req,res,next)=>{
+.put(authenticate.verifyUser,(req,res,next)=>{
 
     Dishes.findById(req.params.dishId)
     .then((dish)=>{
@@ -286,13 +281,11 @@ dishRouter.route('/:dishId/comments/:commentId')
     },(err)=>next(err))
     .catch((err)=>next(err));
     
-    // provide the details which is contained in the body
-    // res.end('Will update the dish: '+req.body.name+' with details: '+req.body.description)
-    
-    //since we parse the body of the incoming request, so we can access them via req.body.name/description
+  
+
 })
 
-.delete((req,res,next)=>{
+.delete(authenticate.verifyUser,(req,res,next)=>{
     // res.end('Deleting all the dishes!')
     // res.end('Deleting dish id'+req.params.dishId)
     Dishes.findById(req.params.dishId) //using promise chaining

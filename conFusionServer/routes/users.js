@@ -3,6 +3,7 @@ var express = require('express');
 const bodyParser=require('body-parser');
 var User=require('../models/user');//use the user schema whenever '/user' get hits
 var passport=require('passport');
+var authenticate=require('../authenticate');
 
 const { unsubscribe } = require('../app');
 var router = express.Router();
@@ -42,9 +43,10 @@ router.post('/signup', (req, res, next) => {
 
 // ====='/login' page will go through passport.authenticate('local') strategy first followed by a call-back function 
 router.post('/login', passport.authenticate('local'), (req, res, next) => {
+  var token=authenticate.getToken({_id:req.user._id}); // create a token based on the user id fromt he request headers
   res.statusCode = 200;
   res.setHeader('Content-Type', 'application/json');
-  res.json({success:true, status: 'You are successfully logged in!'});
+  res.json({success:true, token: token, status: 'You are successfully logged in!'});
 
 })
 
