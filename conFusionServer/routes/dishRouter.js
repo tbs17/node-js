@@ -13,6 +13,7 @@ dishRouter.route('/')
     // res.end('Will send all the dishes to you!')
     // .find/create/findByID/findByIDAndUpdate/findByIDAndRemove are all methods from mongoose
     Dishes.find({})
+    .populate('comments.author') //populate the author informationwhen searching for comments
     .then((dishes)=>{
         res.statusCode=200;
         res.setHeader('Content-Type','application/json');
@@ -66,6 +67,7 @@ dishRouter.route('/:dishId')
 .get((req,res,next)=>{
     // res.end('Will send the details of the dish '+ req.params.dishId+' to you!') //params refer to the parameters in the URL
     Dishes.findById(req.params.dishId)
+    .populate('comments.author')
     .then((dish)=>{
   
         res.statusCode=200;
@@ -124,6 +126,7 @@ dishRouter.route('/:dishId/comments')
     // res.end('Will send all the dishes to you!')
     // .find/create/findByID/findByIDAndUpdate/findByIDAndRemove are all methods from mongoose
     Dishes.findById(req.params.dishId)
+    .populate('comments.author')
     .then((dish)=>{
         if (dish!=null){
             res.statusCode=200;
@@ -148,14 +151,22 @@ dishRouter.route('/:dishId/comments')
     Dishes.findById(req.params.dishId)
     .then((dish)=>{
         if (dish!=null){
+            //author is set to be an objectId referencing the user who logged in
+            // therefore, the author info is the user._id from request 'req.user._id'
+            req.body.author=req.user._id;
             // push the new comments to the data table comments
             dish.comments.push(req.body); //add the posted value
             dish.save()
             .then((dish)=>{
-                res.statusCode=200;
-                res.setHeader('Content-Type','application/json');
-                res.json(dish.comments);//return the dish comments
-            })
+                Dishes.findById(dish._id)
+                    .populate('comments.author')
+                    .then((dish)=>{
+                        res.statusCode=200;
+                        res.setHeader('Content-Type','application/json');
+                        res.json(dish);//return the dish comments
+                })
+
+            },(err)=>next(err)); //set up an error handling
             //only return comments
         } else {
             // Error() is a constructor that can take string or variables
@@ -215,6 +226,7 @@ dishRouter.route('/:dishId/comments/:commentId')
 .get((req,res,next)=>{
     // res.end('Will send the details of the dish '+ req.params.dishId+' to you!') //params refer to the parameters in the URL
     Dishes.findById(req.params.dishId)
+    .populate('comments.author')
     .then((dish)=>{
         // check the dish itself and comment id exist, 'dish.comments.id(req.params.commentId) is to 
         // find the comment based on the commentId
@@ -264,9 +276,13 @@ dishRouter.route('/:dishId/comments/:commentId')
             dish.save()
             // once saved, we send back to the user
             .then((dish)=>{
-                res.statusCode=200;
-                res.setHeader('Content-Type','application/json');
-                res.json(dish);//return the dish comments
+                Dishes.findById(dishId)
+                    .populate('comments.author')
+                    .then((dish)=>{
+                        res.statusCode=200;
+                        res.setHeader('Content-Type','application/json');
+                        res.json(dish);//return the dish comments
+                    })
             },(err)=>next(err))
         } else if (dish==null) {
             // Error() is a constructor that can take string or variables
@@ -298,9 +314,13 @@ dishRouter.route('/:dishId/comments/:commentId')
             
             dish.save() //save the changes to the dish
             .then((dish)=>{
-                res.statusCode=200;
-                res.setHeader('Content-Type','application/json');
-                res.json(dish);//return the remaining dishes
+                Dishes.findById(dishId)
+                .populate('comments.author')
+                .then((dish)=>{
+                    res.statusCode=200;
+                    res.setHeader('Content-Type','application/json');
+                    res.json(dish);//return the dish comments
+                })
             },(err)=>next(err));
             //only return comments
         }  else if (dish==null) {
