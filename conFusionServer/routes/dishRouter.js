@@ -3,13 +3,19 @@ const bodyParser=require('body-parser')
 const mongoose=require('mongoose');
 const authenticate=require('../authenticate');
 const Dishes=require('../models/dishes');
+const cors=require('./cors');
+
 
 const dishRouter=express.Router() //use the Router method of express to create a Router
 dishRouter.use(bodyParser.json())//convert all the parsed info to json format for easy access
 //use the route attribute of the created router and you can chain all the method upon it
 
 dishRouter.route('/')
-.get((req,res,next)=>{
+// add a preflight opetion method behavior
+.options(cors.corsWithOptions,(req,res)=>{
+    res.sendStatus(200);
+})
+.get(cors.cors,(req,res,next)=>{
     // res.end('Will send all the dishes to you!')
     // .find/create/findByID/findByIDAndUpdate/findByIDAndRemove are all methods from mongoose
     Dishes.find({})
@@ -26,7 +32,7 @@ dishRouter.route('/')
 
 })
 // first verify the user via authenticate.verifyUser  and then do the call-back function
-.post(authenticate.verifyUser,(req,res,next)=>{
+.post(cors.corsWithOptions,authenticate.verifyUser,(req,res,next)=>{
     Dishes.create(req.body)
     .then((dish)=>{
         // console log is like alert in javascript
@@ -40,14 +46,14 @@ dishRouter.route('/')
 
 })
 
-.put(authenticate.verifyUser,(req,res,next)=>{
+.put(cors.corsWithOptions,authenticate.verifyUser,(req,res,next)=>{
     res.statusCode=403//as it doesn't make sense to put on the /dishes, it's supposed to update on the server
     res.end('PUT operation not supported on /dishes')
     
     //since we parse the body of the incoming request, so we can access them via req.body.name/description
 })
 
-.delete(authenticate.verifyUser,(req,res,next)=>{
+.delete(cors.corsWithOptions,authenticate.verifyUser,(req,res,next)=>{
 
     Dishes.remove({}) //using promise chaining
     .then((resp)=>{
@@ -64,7 +70,10 @@ dishRouter.route('/')
 
 //========starting the dishId endpoints actions=======
 dishRouter.route('/:dishId')
-.get((req,res,next)=>{
+.options(cors.corsWithOptions,(req,res)=>{
+    res.sendStatus(200);
+})
+.get(cors.cors,(req,res,next)=>{
     // res.end('Will send the details of the dish '+ req.params.dishId+' to you!') //params refer to the parameters in the URL
     Dishes.findById(req.params.dishId)
     .populate('comments.author')
@@ -78,14 +87,14 @@ dishRouter.route('/:dishId')
     .catch((err)=>next(err));
 })
 
-.post(authenticate.verifyUser,(req,res,next)=>{
+.post(cors.corsWithOptions,authenticate.verifyUser,(req,res,next)=>{
     res.statusCode = 403;
     // res.end('Will add the dish:'+req.body.name+ 'with details'+req.body.description)
     //since we parse the body of the incoming request, so we can access them via req.body.name/description
     res.end('POST operation not supported on /dishes/'+req.params.dishId);
 })
 
-.put(authenticate.verifyUser,(req,res,next)=>{
+.put(cors.corsWithOptions,authenticate.verifyUser,(req,res,next)=>{
     // res.statusCode=403//as it doesn't make sense to put on the /dishes, it's supposed to update on the server
     // res.end('PUT operation not supported on /dishes')
     // res.write('Updating the dish: '+req.params.dishId)
@@ -105,7 +114,7 @@ dishRouter.route('/:dishId')
     //since we parse the body of the incoming request, so we can access them via req.body.name/description
 })
 
-.delete(authenticate.verifyUser,(req,res,next)=>{
+.delete(cors.corsWithOptions,authenticate.verifyUser,(req,res,next)=>{
     // res.end('Deleting all the dishes!')
     // res.end('Deleting dish id'+req.params.dishId)
     
@@ -122,7 +131,10 @@ dishRouter.route('/:dishId')
 // ================handling comments=====================
 dishRouter.route('/:dishId/comments')
 // as long as there's no semi-colon in between, it's chaining, you don't need the /dishes any more
-.get((req,res,next)=>{
+.options(cors.corsWithOptions,(req,res)=>{
+    res.sendStatus(200);
+})
+.get(cors.cors,(req,res,next)=>{
     // res.end('Will send all the dishes to you!')
     // .find/create/findByID/findByIDAndUpdate/findByIDAndRemove are all methods from mongoose
     Dishes.findById(req.params.dishId)
@@ -145,7 +157,7 @@ dishRouter.route('/:dishId/comments')
 
 })
 
-.post(authenticate.verifyUser,(req,res,next)=>{
+.post(cors.corsWithOptions,authenticate.verifyUser,(req,res,next)=>{
     // res.end('Will add the dish: '+req.body.name+ ' with details: '+req.body.description)
     //since we parse the body of the incoming request, so we can access them via req.body.name/description
     Dishes.findById(req.params.dishId)
@@ -180,7 +192,7 @@ dishRouter.route('/:dishId/comments')
 
 })
 
-.put(authenticate.verifyUser,(req,res,next)=>{
+.put(cors.corsWithOptions,authenticate.verifyUser,(req,res,next)=>{
     res.statusCode=403//as it doesn't make sense to put on the /dishes, it's supposed to update on the server
     res.end('PUT operation not supported on /dishes/'+req.params.dishId+'/comments!')
     
@@ -223,7 +235,10 @@ dishRouter.route('/:dishId/comments')
 // ===================================================
 //========Handling commentId endpoints actions=======
 dishRouter.route('/:dishId/comments/:commentId')
-.get((req,res,next)=>{
+.options(cors.corsWithOptions,(req,res)=>{
+    res.sendStatus(200);
+})
+.get(cors.cors,(req,res,next)=>{
     // res.end('Will send the details of the dish '+ req.params.dishId+' to you!') //params refer to the parameters in the URL
     Dishes.findById(req.params.dishId)
     .populate('comments.author')
@@ -249,14 +264,13 @@ dishRouter.route('/:dishId/comments/:commentId')
     .catch((err)=>next(err));
 })
 
-.post(authenticate.verifyUser,(req,res,next)=>{
+.post(cors.corsWithOptions,authenticate.verifyUser,(req,res,next)=>{
     res.statusCode = 403;
-    // res.end('Will add the dish:'+req.body.name+ 'with details'+req.body.description)
     //since we parse the body of the incoming request, so we can access them via req.body.name/description
     res.end('POST operation not supported on /dishes/'+req.params.dishId+'/comments/'+req.params.commentId);
 })
 
-.put(authenticate.verifyUser,(req,res,next)=>{
+.put(cors.corsWithOptions,authenticate.verifyUser,(req,res,next)=>{
 
     Dishes.findById(req.params.dishId)
     .then((dish)=>{
@@ -272,7 +286,6 @@ dishRouter.route('/:dishId/comments/:commentId')
                 dish.comments.id(req.params.commentId).comment=req.body.comment;
                 // we will update the comment to be the body comment
             }
-
             dish.save()
             // once saved, we send back to the user
             .then((dish)=>{
@@ -301,7 +314,7 @@ dishRouter.route('/:dishId/comments/:commentId')
 
 })
 
-.delete(authenticate.verifyUser,(req,res,next)=>{
+.delete(cors.corsWithOptions,authenticate.verifyUser,(req,res,next)=>{
     // res.end('Deleting all the dishes!')
     // res.end('Deleting dish id'+req.params.dishId)
     Dishes.findById(req.params.dishId) //using promise chaining

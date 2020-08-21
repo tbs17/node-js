@@ -1,4 +1,7 @@
 var express = require('express');
+const cors=require('./cors');
+
+
 
 const bodyParser=require('body-parser');
 var User=require('../models/user');//use the user schema whenever '/user' get hits
@@ -9,14 +12,14 @@ const { unsubscribe } = require('../app');
 var router = express.Router();
 router.use(bodyParser.json());//parse everything and turn them into json
 /* GET users listing. */
-router.get('/', function(req, res, next) {
+router.get('/', cors.cors,function(req, res, next) {
   //function(){} is the same as ()=>{}
   res.send('respond with a resource');
 });
 // in the request, it will be 'user/signup'
 // passport based authentication
 
-router.post('/signup', (req, res, next) => {
+router.post('/signup',cors.corsWithOptions, (req, res, next) => {
 
   User.register(new User({username: req.body.username}),//1st parameter, if the value is a dictionary, then you will need to use {}
   req.body.password,//2nd parameter
@@ -60,7 +63,7 @@ router.post('/signup', (req, res, next) => {
 
 
 // ====='/login' page will go through passport.authenticate('local') strategy first followed by a call-back function 
-router.post('/login', passport.authenticate('local'), (req, res, next) => {
+router.post('/login',cors.corsWithOptions, passport.authenticate('local'), (req, res, next) => {
   var token=authenticate.getToken({_id:req.user._id}); // create a token based on the user id fromt he request headers
   res.statusCode = 200;
   res.setHeader('Content-Type', 'application/json');
@@ -68,7 +71,7 @@ router.post('/login', passport.authenticate('local'), (req, res, next) => {
 
 })
 
-router.get('/logout', (req, res) => {
+router.get('/logout',cors.cors, (req, res) => {
     // if the user is logged in, meaning req.session.user is true 
   if (req.session) {
     req.session.destroy();
