@@ -15,6 +15,7 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var dishRouter = require('./routes/dishRouter');
 var uploadRouter = require('./routes/uploadRouter');
+var commentRouter=require('./routes/commentRouter');
 // below is to use mongoose schema ile
 const mongoose=require('mongoose');
 const Dishes=require('./models/dishes');
@@ -58,6 +59,7 @@ app.use(passport.initialize());
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/comments',commentRouter);
 
 app.use(express.static(path.join(__dirname, 'public')));
 

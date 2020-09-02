@@ -15,10 +15,12 @@ dishRouter.route('/')
 .options(cors.corsWithOptions,(req,res)=>{
     res.sendStatus(200);
 })
+
+// for all the 'GET' methods, we just need simple CORS policy
 .get(cors.cors,(req,res,next)=>{
     // res.end('Will send all the dishes to you!')
     // .find/create/findByID/findByIDAndUpdate/findByIDAndRemove are all methods from mongoose
-    Dishes.find({})
+    Dishes.find(req.query)
     .populate('comments.author') //populate the author informationwhen searching for comments
     .then((dishes)=>{
         res.statusCode=200;
@@ -32,6 +34,7 @@ dishRouter.route('/')
 
 })
 // first verify the user via authenticate.verifyUser  and then do the call-back function
+// for all the POST/PUT/DELETE method, we need the preflighted corswithOptions
 .post(cors.corsWithOptions,authenticate.verifyUser,(req,res,next)=>{
     Dishes.create(req.body)
     .then((dish)=>{
